@@ -1,4 +1,6 @@
 import numpy as np
+from matplotlib import pyplot as plt
+import numpy as np
 from pathlib import Path
 import random
 
@@ -8,6 +10,10 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 from typing import Tuple
+
+
+MNIST_MEAN = 0.1307
+MNIST_STD = 0.3081
 
 
 def set_seeds(seed: int) -> None:
@@ -44,7 +50,7 @@ def prepare_mnist_dataloader(
         [
             transforms.ToTensor(),
             transforms.Normalize(
-                (0.1307,), (0.3081,)
+                (MNIST_MEAN,), (MNIST_STD,)
             ),  # Mean and Std Deviation for MNIST
         ]
     )
@@ -145,3 +151,30 @@ def save_neps_checkpoint(
         _save_dict,
         pipeline_directory / "checkpoint.pth",
     )
+
+
+def display_images(dataloader: DataLoader, num_images: int=10):
+    """Display random images from a PyTorch DataLoader.
+
+    Args:
+        dataloader (DataLoader): The DataLoader to sample from.
+        num_images (int): The number of images to display.
+    """
+    # Get a batch of images from the dataloader
+    images, labels = next(iter(dataloader))
+
+    # Choose random images from the batch
+    indices = np.random.choice(len(images), size=num_images, replace=False)
+
+    for i in indices:
+        # Un-normalize the image
+        image = images[i].numpy() * MNIST_STD + MNIST_MEAN
+
+        # PyTorch tensors for images are (C, H, W) but matplotlib expects (H, W, C)
+        image = np.transpose(image, (1, 2, 0))
+
+        # Display the image
+        plt.figure()
+        plt.imshow(image.squeeze(), cmap='gray')
+        plt.title(f'Label: {labels[i].item()}')
+        plt.show()
