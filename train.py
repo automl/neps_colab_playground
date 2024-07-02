@@ -1,5 +1,7 @@
+from pathlib import Path
 import time
 import torch.nn as nn
+from typing import Union
 
 from model import SimpleCNN
 from utils import (
@@ -8,6 +10,7 @@ from utils import (
     load_neps_checkpoint,
     prepare_mnist_dataloader,
     save_neps_checkpoint,
+    total_gradient_l2_norm,
     train_one_epoch,
     validate_model
 )
@@ -17,20 +20,23 @@ from neps.plot.tensorboard_eval import tblogger
 
 def training_pipeline(
     # neps parameters for load-save of checkpoints
-    pipeline_directory,
-    previous_pipeline_directory,
+    pipeline_directory: Union[Path, None] = None,
+    previous_pipeline_directory: Union[Path, None] = None,
     # hyperparameters
-    batch_size=128,
-    num_layers=4,
-    num_neurons=256,
-    learning_rate=1e-3,
-    weight_decay=0.01,
-    optimizer="adamw",
-    epochs=10,
+    batch_size: int = 128,
+    num_layers: int = 2,
+    num_neurons: int = 256,
+    learning_rate: float = 1e-3,
+    weight_decay: float = 0.01,
+    optimizer: str = "adamw",
+    dropout: bool = True,
+    # fidelity control
+    epochs: int = 10,
+    subsample: float = 1.0,
     # other parameters
-    log_tensorboard=False,
-    verbose=True,
-    allow_checkpointing=False,
+    log_tensorboard: bool = False,
+    verbose: bool = True,
+    allow_checkpointing: bool = False,
 ):
     # Load data
     _start = time.time()
@@ -39,7 +45,7 @@ def training_pipeline(
         val_loader,
         (num_channels, image_height, image_width),
         num_classes
-    ) = prepare_mnist_dataloader(batch_size=batch_size)
+    ) = prepare_mnist_dataloader(batch_size=batch_size, subsample_fraction=subsample)
     data_load_time = time.time() - _start
 
     # Instantiate model
@@ -50,7 +56,7 @@ def training_pipeline(
         hidden_dim=num_neurons,
         image_height=image_height,
         image_width=image_width,
-        dropout=True  # TODO: parameterize
+        dropout=dropout
     )
 
     # Instantiate loss function
@@ -121,7 +127,10 @@ def training_pipeline(
                 writer_config_scalar=True,
                 writer_config_hparam=True,
                 extra_data={
-                    "train_loss": tblogger.scalar_logging(value=mean_loss)
+                    "train_loss": tblogger.scalar_logging(value=mean_loss),
+                    "l2_norm": tblogger.scalar_logging(
+                        value=total_gradient_l2_norm(model)
+                    ),
                 },
             )
         logging_time = time.time() - start
