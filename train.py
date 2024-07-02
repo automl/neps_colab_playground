@@ -1,5 +1,6 @@
 from pathlib import Path
 import time
+import torch
 import torch.nn as nn
 from typing import Union
 
@@ -57,6 +58,9 @@ def training_pipeline(
     ) = prepare_mnist_dataloader(batch_size=batch_size, subsample_fraction=subsample)
     data_load_time = time.time() - _start
 
+    # Set device
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     # Instantiate model
     model = SimpleCNN(
         input_channels=num_channels,
@@ -67,6 +71,7 @@ def training_pipeline(
         image_width=image_width,
         dropout=dropout
     )
+    model = model.to(device)
 
     # Instantiate loss function
     criterion = nn.CrossEntropyLoss()
@@ -111,12 +116,13 @@ def training_pipeline(
             model,
             criterion,
             optimizer,
-            scheduler
+            scheduler,
+            device=device
         )
 
         # perform validation per epoch
         start = time.time()
-        val_loss = validate_model(model, val_loader, criterion)
+        val_loss = validate_model(model, val_loader, criterion, device=device)
         validation_time += (time.time() - start)
 
         if verbose:

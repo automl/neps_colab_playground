@@ -224,10 +224,14 @@ def train_one_epoch(
     model: nn.Module,
     loss_fn: nn.Module,
     optimizer: optim.Optimizer,
-    scheduler=None
+    scheduler=None,
+    device: str = "cpu"
 ) -> Tuple[nn.Module, optim.Optimizer, Union[torch.optim.lr_scheduler.LRScheduler, None], float]:
     loss_per_batch = []
+    model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
+        data = data.to(device)
+        target = target.to(device)
         optimizer.zero_grad()
         output = model(data)
         loss = loss_fn(output, target)
@@ -239,11 +243,18 @@ def train_one_epoch(
     return model, optimizer, scheduler, np.mean(loss_per_batch)
 
 
-def validate_model(model: nn.Module, val_loader: DataLoader, loss_fn: nn.Module) -> float:
+def validate_model(
+    model: nn.Module,
+    val_loader: DataLoader,
+    loss_fn: nn.Module,
+    device: str = "cpu"
+) -> float:
     model.eval()
     val_loss = 0
     with torch.no_grad():
         for data, target in val_loader:
+            data = data.to(device)
+            target = target.to(device)
             output = model(data)
             val_loss += loss_fn(output, target).item()
     val_loss /= len(val_loader.dataset)
