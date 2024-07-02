@@ -23,14 +23,21 @@ def set_seeds(seed: int) -> None:
         torch.backends.cudnn.benchmark = False
 
 
-def prepare_mnist_dataloader(batch_size: int=64) -> Tuple[DataLoader, DataLoader]:
+def prepare_mnist_dataloader(
+    batch_size: int=64,
+    val_fraction: float=0.1,
+    subsample_fraction: float=1.0,
+) -> Tuple[DataLoader, DataLoader, Tuple[int, int, int], int]:
     """Prepare MNIST dataloader.
 
     Args:
         batch_size (int): Batch size for training and validation dataloader.
 
     Returns:
-        Tuple[DataLoader, DataLoader]: Training and Validation dataloader
+        train_loader (DataLoader): Dataloader for training dataset.
+        val_loader (DataLoader): Dataloader for validation dataset.
+        image_dimensions (Tuple[int, int, int]): Dimensions of the image.
+        num_classes (int): Number of classes in the dataset.
     """
     # Transformations applied on each image
     transform = transforms.Compose(
@@ -45,11 +52,27 @@ def prepare_mnist_dataloader(batch_size: int=64) -> Tuple[DataLoader, DataLoader
     dataset = datasets.MNIST(
         root="./data", train=True, download=True, transform=transform
     )
-    train_set, val_set = torch.utils.data.random_split(dataset, [55000, 5000])
+    val_size = int(val_fraction * len(dataset))
+    train_size = len(dataset) - val_size
+    train_set, val_set = torch.utils.data.random_split(dataset, [train_size, val_size])
+
+    # Subsample the training dataset
+    if subsample_fraction < 1.0:
+        train_size = int(subsample_fraction * len(train_set))
+        train_set, _ = torch.utils.data.random_split(
+            train_set, [train_size, len(train_set) - train_size]
+        )
+
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_set, batch_size=1000, shuffle=False)
 
-    return train_loader, val_loader
+    # Get image dimensions from first sample
+    num_channels, image_height, image_width = train_set[0][0].shape
+
+    # Number of classes in the dataset
+    num_classes = len(dataset.classes)
+
+    return train_loader, val_loader, (num_channels, image_height, image_width), num_classes
 
 
 def load_neps_checkpoint(

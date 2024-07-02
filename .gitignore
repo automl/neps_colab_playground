@@ -1,0 +1,10 @@
+__pycache__/
+
+*data*/
+*results*/
+*output*/
+
+*.pkl
+*.json
+*.pt
+*.csv
