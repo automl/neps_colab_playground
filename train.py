@@ -48,6 +48,22 @@ def training_pipeline(
     * (Optional) Using tblogger to log tensorboard metrics supported by NePS
     * Returning a dictionary with keys "loss", "cost", and "info_dict"
         * "loss" must be a minimizing metric
+
+    Args:
+        out_dir (Union[Path, None]): Directory to save the checkpoint.
+        load_dir (Union[Path, None]): Directory to load the checkpoint.
+        batch_size (int): Batch size for training and validation dataloader.
+        num_layers (int): Number of convolutional layers in the model.
+        num_neurons (int): Number of neurons in the hidden layer.
+        learning_rate (float): Learning rate for the optimizer.
+        weight_decay (float): L2 regularization parameter.
+        optimizer (str): Name of the optimizer to use.
+        dropout (bool): Whether to use dropout in the model.
+        epochs (int): Number of epochs to train the model.
+        subsample (float): Fraction of the training data to use.
+        log_neps_tensorboard (bool): Whether to log tensorboard metrics.
+        verbose (bool): Whether to print training progress.
+        allow_checkpointing (bool): Whether to save checkpoints.
     """
 
     # Load data
