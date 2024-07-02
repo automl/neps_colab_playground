@@ -69,7 +69,7 @@ class SimpleCNN(nn.Module):
                 nn.Conv2d(input_channels, _out_channels, kernel_size=3)
             )
             layers.append(nn.ReLU())
-            layers.append(nn.MaxPool2d(3))
+            layers.append(nn.MaxPool2d(2, stride=1))
             if dropout:
                 layers.append(nn.Dropout(self.dropout_magnitude))
             input_channels = _out_channels  # Set input channels for the next layer

@@ -21,7 +21,7 @@ def training_pipeline(
     previous_pipeline_directory,
     # hyperparameters
     batch_size=128,
-    num_layers=3,
+    num_layers=4,
     num_neurons=256,
     learning_rate=1e-3,
     weight_decay=0.01,
@@ -43,14 +43,14 @@ def training_pipeline(
     data_load_time = time.time() - _start
 
     # Instantiate model
-    model = SimpleCNN(        
+    model = SimpleCNN(
         input_channels=num_channels,
         num_layers=num_layers,
         num_classes=num_classes,
         hidden_dim=num_neurons,
         image_height=image_height,
         image_width=image_width,
-        dropout=True # TODO: parameterize
+        dropout=True  # TODO: parameterize
     )
 
     # Instantiate loss function
@@ -98,26 +98,10 @@ def training_pipeline(
             optimizer,
             scheduler
         )
-        # for batch_idx, (data, target) in enumerate(train_loader):
-        #     optimizer.zero_grad()
-        #     output = model(data)
-        #     loss = criterion(output, target)
-        #     loss.backward()
-        #     optimizer.step()
-        #     if scheduler is not None:
-        #         scheduler.step()
-        #     loss_per_batch.append(loss.item())
 
         # perform validation per epoch
         start = time.time()
         val_loss = validate_model(model, val_loader, criterion)
-        # model.eval()
-        # val_loss = 0
-        # with torch.no_grad():
-        #     for data, target in val_loader:
-        #         output = model(data)
-        #         val_loss += criterion(output, target).item()
-        # val_loss /= len(val_loader.dataset)
         validation_time += (time.time() - start)
 
         if verbose:
