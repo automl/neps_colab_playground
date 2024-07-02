@@ -38,6 +38,7 @@ def training_pipeline(
     log_neps_tensorboard: bool = False,
     verbose: bool = True,
     allow_checkpointing: bool = False,
+    use_for_demo: bool = False,
 ):
     """Training pipeline for a simple CNN on MNIST dataset.
 
@@ -64,7 +65,15 @@ def training_pipeline(
         log_neps_tensorboard (bool): Whether to log tensorboard metrics.
         verbose (bool): Whether to print training progress.
         allow_checkpointing (bool): Whether to save checkpoints.
+
+        use_for_demo (bool): Whether to use this pipeline for demo purposes.
+            This sets the subsampling factor to 10% and epochs to 3, or to the values 
+            passed if it is less than 10% and 3 respectively.
     """
+
+    if use_for_demo:
+        subsample = min(0.1, subsample)
+        epochs = min(3, epochs)
 
     # Load data
     _start = time.time()
@@ -188,3 +197,59 @@ def training_pipeline(
             },
         }
     }
+
+
+def run_pipeline_demo(
+    # neps parameters for load-save of checkpoints
+    pipeline_directory,
+    previous_pipeline_directory,
+    # fixed settings
+    batch_size=1024,
+    subsample=0.2,
+    epochs=5,
+    use_for_demo=True,
+    # hyperparameters passed by NePS
+    **config,
+):
+    result = training_pipeline(
+        **config,
+        out_dir=pipeline_directory,
+        load_dir=previous_pipeline_directory,
+        batch_size=batch_size,
+        subsample=subsample,
+        epochs=epochs,
+        # other variables
+        log_neps_tensorboard=True,
+        verbose=False,
+        allow_checkpointing=True,
+        use_for_demo=use_for_demo,  # set to True for demo purposes
+    )
+    return result
+
+
+def run_pipeline_half_data(
+    pipeline_directory,
+    previous_pipeline_directory,
+    **kwargs,
+):
+    return run_pipeline_demo(
+        pipeline_directory=pipeline_directory,
+        previous_pipeline_directory=previous_pipeline_directory,
+        use_for_demo=False,
+        subsample=0.5,
+        **kwargs,
+    )
+
+
+def run_pipeline(
+    pipeline_directory,
+    previous_pipeline_directory,
+    **kwargs,
+):
+    return run_pipeline_demo(
+        pipeline_directory=pipeline_directory,
+        previous_pipeline_directory=previous_pipeline_directory,
+        use_for_demo=False,
+        subsample=1.0,
+        **kwargs,
+    )

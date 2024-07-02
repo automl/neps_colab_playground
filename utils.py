@@ -32,7 +32,7 @@ def set_seeds(seed: int) -> None:
 
 def prepare_mnist_dataloader(
     batch_size: int=64,
-    val_fraction: float=0.1,
+    val_fraction: float=0.25,
     subsample_fraction: float=1.0,
 ) -> Tuple[DataLoader, DataLoader, Tuple[int, int, int], int]:
     """Prepare MNIST dataloader.
