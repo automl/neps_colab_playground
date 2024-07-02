@@ -21,8 +21,8 @@ from neps.plot.tensorboard_eval import tblogger
 
 def training_pipeline(
     # neps parameters for load-save of checkpoints
-    pipeline_directory: Union[Path, None] = None,
-    previous_pipeline_directory: Union[Path, None] = None,
+    out_dir: Union[Path, None] = None,
+    load_dir: Union[Path, None] = None,
     # hyperparameters
     batch_size: int = 128,
     num_layers: int = 2,
@@ -35,11 +35,12 @@ def training_pipeline(
     epochs: int = 10,
     subsample: float = 1.0,
     # other parameters
-    log_tensorboard: bool = False,
+    log_neps_tensorboard: bool = False,
     verbose: bool = True,
     allow_checkpointing: bool = False,
 ):
     """Training pipeline for a simple CNN on MNIST dataset.
+
 
     This is a standard pipeline to train and validate models. 
     The only exclusive requirement to interface NePS are:
@@ -48,6 +49,7 @@ def training_pipeline(
     * Returning a dictionary with keys "loss", "cost", and "info_dict"
         * "loss" must be a minimizing metric
     """
+
     # Load data
     _start = time.time()
     (
@@ -57,9 +59,6 @@ def training_pipeline(
         num_classes
     ) = prepare_mnist_dataloader(batch_size=batch_size, subsample_fraction=subsample)
     data_load_time = time.time() - _start
-
-    # Set device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Instantiate model
     model = SimpleCNN(
@@ -71,7 +70,6 @@ def training_pipeline(
         image_width=image_width,
         dropout=dropout
     )
-    model = model.to(device)
 
     # Instantiate loss function
     criterion = nn.CrossEntropyLoss()
@@ -99,8 +97,8 @@ def training_pipeline(
     start = time.time()
     steps = None
     if allow_checkpointing:
-        steps, model, optimizer = load_neps_checkpoint(
-            previous_pipeline_directory, model, optimizer, scheduler
+        steps, model, optimizer, scheduler = load_neps_checkpoint(
+            load_dir, model, optimizer, scheduler
         )
     checkpoint_load_time = time.time() - start
 
@@ -109,6 +107,7 @@ def training_pipeline(
     # Training loop
     steps = steps or 0  # accounting for continuation if checkpoint loaded
     for epoch in range(steps, epochs):
+
         # perform one epoch of training
         model.train()
         model, optimizer, scheduler, mean_loss = train_one_epoch(
@@ -116,13 +115,12 @@ def training_pipeline(
             model,
             criterion,
             optimizer,
-            scheduler,
-            device=device
+            scheduler
         )
 
         # perform validation per epoch
         start = time.time()
-        val_loss = validate_model(model, val_loader, criterion, device=device)
+        val_loss = validate_model(model, val_loader, criterion)
         validation_time += (time.time() - start)
 
         if verbose:
@@ -132,13 +130,13 @@ def training_pipeline(
                 f"val loss: {val_loss:.5f}"
             )
 
-        # refer https://automl.github.io/neps/latest/examples/convenience/neps_tblogger_tutorial/
+        # special logging for NePS
         start = time.time()
-        if log_tensorboard:
+        if log_neps_tensorboard:
+            # refer https://automl.github.io/neps/latest/examples/convenience/neps_tblogger_tutorial/
             tblogger.log(
                 loss=val_loss,
                 current_epoch=epoch+1,
-                # write_summary_incumbent=True,  # this fails, need to fix?
                 writer_config_scalar=True,
                 writer_config_hparam=True,
                 extra_data={
@@ -153,7 +151,7 @@ def training_pipeline(
 
     # Save checkpoint
     if allow_checkpointing:
-        save_neps_checkpoint(pipeline_directory, epoch, model, optimizer, scheduler)
+        save_neps_checkpoint(out_dir, epoch, model, optimizer, scheduler)
 
     return {
         "loss": val_loss,  # validation loss in the last epoch

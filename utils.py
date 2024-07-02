@@ -87,7 +87,7 @@ def load_neps_checkpoint(
         model: nn.Module,
         optimizer: torch.optim.Optimizer,
         scheduler: torch.optim.lr_scheduler.LRScheduler | None = None,
-    ) -> Tuple[int, nn.Module, torch.optim.Optimizer]:
+    ) -> Tuple[int, nn.Module, torch.optim.Optimizer, torch.optim.lr_scheduler.LRScheduler | None]:
     """Load checkpoint state to be used by NePS.
     
     Args:
