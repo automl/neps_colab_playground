@@ -38,6 +38,15 @@ def training_pipeline(
     verbose: bool = True,
     allow_checkpointing: bool = False,
 ):
+    """Training pipeline for a simple CNN on MNIST dataset.
+
+    This is a standard pipeline to train and validate models. 
+    The only exclusive requirement to interface NePS are:
+    * Arguments that pass hyperparameters
+    * (Optional) Using tblogger to log tensorboard metrics supported by NePS
+    * Returning a dictionary with keys "loss", "cost", and "info_dict"
+        * "loss" must be a minimizing metric
+    """
     # Load data
     _start = time.time()
     (
