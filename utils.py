@@ -205,7 +205,7 @@ def get_optimizer(optimizer: str, model: nn.Module, learning_rate: float, weight
 
 def get_scheduler(
     optimizer: torch.optim, scheduler: str = None, scheduler_args: dict = None
-) -> torch.optim.lr_scheduler:
+) -> torch.optim.lr_scheduler.LRScheduler | None:
     match scheduler:
         case None:
             return None
@@ -225,7 +225,7 @@ def train_one_epoch(
     loss_fn: nn.Module,
     optimizer: optim.Optimizer,
     scheduler=None
-) -> Tuple[nn.Module, optim.Optimizer, Union[torch.optim.lr_scheduler, None], float]:
+) -> Tuple[nn.Module, optim.Optimizer, Union[torch.optim.lr_scheduler.LRScheduler, None], float]:
     loss_per_batch = []
     for batch_idx, (data, target) in enumerate(train_loader):
         optimizer.zero_grad()
