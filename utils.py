@@ -7,9 +7,10 @@ import random
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+import torch.optim as optim
 from torchvision import datasets, transforms
 
-from typing import Tuple
+from typing import Tuple, Union
 
 
 MNIST_MEAN = 0.1307
@@ -153,7 +154,7 @@ def save_neps_checkpoint(
     )
 
 
-def display_images(dataloader: DataLoader, num_images: int=10):
+def display_images(dataloader: DataLoader, num_images: int=5):
     """Display random images from a PyTorch DataLoader.
 
     Args:
@@ -166,15 +167,84 @@ def display_images(dataloader: DataLoader, num_images: int=10):
     # Choose random images from the batch
     indices = np.random.choice(len(images), size=num_images, replace=False)
 
-    for i in indices:
+    # Display the images
+    fig, axs = plt.subplots(1, num_images, figsize=(5*num_images, 5))
+    for i, idx in enumerate(indices):
         # Un-normalize the image
-        image = images[i].numpy() * MNIST_STD + MNIST_MEAN
+        image = images[idx].numpy() * MNIST_STD + MNIST_MEAN
 
         # PyTorch tensors for images are (C, H, W) but matplotlib expects (H, W, C)
         image = np.transpose(image, (1, 2, 0))
 
         # Display the image
-        plt.figure()
-        plt.imshow(image.squeeze(), cmap='gray')
-        plt.title(f'Label: {labels[i].item()}')
-        plt.show()
+        if num_images > 1:
+            axs[i].imshow(image.squeeze(), cmap='gray')
+            axs[i].set_title(f'Label: {labels[idx].item()}')
+            axs[i].axis('off')  # Hide the axes
+        else:
+            axs.imshow(image.squeeze(), cmap='gray')
+            axs.set_title(f'Label: {labels[idx].item()}')
+            axs.axis('off')  # Hide the axes
+
+    # Show the plot
+    plt.show()
+
+
+def get_optimizer(optimizer: str, model: nn.Module, learning_rate: float, weight_decay: float):
+    optimizer_name = optimizer
+    if optimizer == "adam":
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    elif optimizer == "adamw":
+        optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    elif optimizer == "sgd":
+        optimizer = optim.SGD(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    else:
+        raise KeyError(f"optimizer {optimizer} is not available")
+    return optimizer
+
+
+def get_scheduler(
+    optimizer: torch.optim, scheduler: str = None, scheduler_args: dict = None
+) -> torch.optim.lr_scheduler:
+    match scheduler:
+        case None:
+            return None
+        case "cosine":
+            return optim.lr_scheduler.CosineAnnealingLR(optimizer, **scheduler_args)
+        case "step":
+            return optim.lr_scheduler.StepLR(optimizer, **scheduler_args)
+        case "expo":
+            return optim.lr_scheduler.ExponentialLR(optimizer, **scheduler_args)
+        case _:
+            raise KeyError(f"Scheduler {scheduler} is not available")
+
+
+def train_one_epoch(
+    train_loader: DataLoader,
+    model: nn.Module,
+    loss_fn: nn.Module,
+    optimizer: optim.Optimizer,
+    scheduler=None
+) -> Tuple[nn.Module, optim.Optimizer, Union[torch.optim.lr_scheduler, None], float]:
+    loss_per_batch = []
+    for batch_idx, (data, target) in enumerate(train_loader):
+        optimizer.zero_grad()
+        output = model(data)
+        loss = criterion(output, target)
+        loss.backward()
+        optimizer.step()
+        if scheduler is not None:
+            scheduler.step()
+        loss_per_batch.append(loss.item())
+    return model, optimizer, scheduler, np.mean(loss_per_batch)
+
+
+def validate_model(model: nn.Module, val_loader: DataLoader, criterion: nn.Module) -> float:
+    model.eval()
+    val_loss = 0
+    with torch.no_grad():
+        for data, target in val_loader:
+            output = model(data)
+            val_loss += criterion(output, target).item()
+    val_loss /= len(val_loader.dataset)
+    return val_loss
