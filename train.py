@@ -1,3 +1,4 @@
+from functools import partial
 from pathlib import Path
 import time
 import torch
@@ -227,29 +228,8 @@ def run_pipeline_demo(
     return result
 
 
-def run_pipeline_half_data(
-    pipeline_directory,
-    previous_pipeline_directory,
-    **kwargs,
-):
-    return run_pipeline_demo(
-        pipeline_directory=pipeline_directory,
-        previous_pipeline_directory=previous_pipeline_directory,
-        use_for_demo=False,
-        subsample=0.5,
-        **kwargs,
-    )
+run_pipeline_half_data = partial(run_pipeline_demo, use_for_demo=False, subsample=0.5)
+run_pipeline = partial(run_pipeline_demo, use_for_demo=False, subsample=1.0)
 
 
-def run_pipeline(
-    pipeline_directory,
-    previous_pipeline_directory,
-    **kwargs,
-):
-    return run_pipeline_demo(
-        pipeline_directory=pipeline_directory,
-        previous_pipeline_directory=previous_pipeline_directory,
-        use_for_demo=False,
-        subsample=1.0,
-        **kwargs,
-    )
+
