@@ -74,8 +74,15 @@ def training_pipeline(
     """
 
     if use_for_demo:
+        # For demo purposes, we will use a: 
+        # smaller dataset
         subsample = min(0.1, subsample)
+        # fewer epochs
         epochs = min(3, epochs)
+        # smaller training set
+        val_fraction = max(0.4, val_fraction)
+        # a single layer
+        num_layers = min(1, num_layers)
 
     # Load data
     _start = time.time()
