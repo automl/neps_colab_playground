@@ -36,6 +36,7 @@ def training_pipeline(
     epochs: int = 10,
     subsample: float = 1.0,
     # other parameters
+    val_fraction: float = 0.3,
     log_neps_tensorboard: bool = False,
     verbose: bool = True,
     allow_checkpointing: bool = False,
@@ -83,7 +84,11 @@ def training_pipeline(
         val_loader,
         (num_channels, image_height, image_width),
         num_classes
-    ) = prepare_mnist_dataloader(batch_size=batch_size, subsample_fraction=subsample)
+    ) = prepare_mnist_dataloader(
+        batch_size=batch_size,
+        subsample_fraction=subsample,
+        val_fraction=val_fraction
+    )
     data_load_time = time.time() - _start
 
     # Instantiate model

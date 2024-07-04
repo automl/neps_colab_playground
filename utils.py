@@ -39,6 +39,8 @@ def prepare_mnist_dataloader(
 
     Args:
         batch_size (int): Batch size for training and validation dataloader.
+        val_fraction (float): Fraction of the dataset to use for validation.
+        subsample_fraction (float): Fraction of the training dataset to use.
 
     Returns:
         train_loader (DataLoader): Dataloader for training dataset.
