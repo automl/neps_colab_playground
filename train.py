@@ -41,6 +41,7 @@ def training_pipeline(
     verbose: bool = True,
     allow_checkpointing: bool = False,
     use_for_demo: bool = False,
+    optimize_over_loss: bool = False,
 ):
     """Training pipeline for a simple CNN on MNIST dataset.
 
@@ -67,6 +68,7 @@ def training_pipeline(
         log_neps_tensorboard (bool): Whether to log tensorboard metrics.
         verbose (bool): Whether to print training progress.
         allow_checkpointing (bool): Whether to save checkpoints.
+        optimize_over_loss (bool): Whether to optimize over loss or accuracy.
 
         use_for_demo (bool): Whether to use this pipeline for demo purposes.
             This sets the subsampling factor to 10% and epochs to 3, or to the values 
@@ -74,7 +76,7 @@ def training_pipeline(
     """
 
     if use_for_demo:
-        # For demo purposes, we will use a: 
+        # For demo purposes, we will use a:
         # smaller dataset
         subsample = min(0.1, subsample)
         # fewer epochs
@@ -158,7 +160,7 @@ def training_pipeline(
 
         # perform validation per epoch
         start = time.time()
-        val_loss = validate_model(model, val_loader, criterion)
+        val_loss, val_accuracy = validate_model(model, val_loader, criterion)
         validation_time += (time.time() - start)
 
         if verbose:
@@ -167,6 +169,8 @@ def training_pipeline(
                 f"loss: {mean_loss:.5f}, "
                 f"val loss: {val_loss:.5f}"
             )
+
+        minimizing_metric = val_loss if optimize_over_loss else 1-val_accuracy
 
         # special logging for NePS
         start = time.time()
@@ -192,10 +196,12 @@ def training_pipeline(
         save_neps_checkpoint(out_dir, epoch, model, optimizer, scheduler)
 
     return {
-        "loss": val_loss,  # validation loss in the last epoch
+        "loss": minimizing_metric,  # validation loss in the last epoch
         "cost": time.time() - _start,
         "info_dict": {
             "training_loss": mean_loss,  # training loss in the last epoch
+            "val_loss": val_loss,
+            "val_accuracy": val_accuracy,
             "data_load_time": data_load_time,
             "training_time": training_time,
             "validation_time": validation_time,
@@ -242,6 +248,3 @@ def run_pipeline_demo(
 
 run_pipeline_half_data = partial(run_pipeline_demo, use_for_demo=False, subsample=0.5)
 run_pipeline = partial(run_pipeline_demo, use_for_demo=False, subsample=1.0)
-
-
-

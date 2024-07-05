@@ -253,14 +253,20 @@ def validate_model(
 ) -> float:
     model.eval()
     val_loss = 0
+    total = 0
+    correct = 0
     with torch.no_grad():
         for data, target in val_loader:
             data = data.to(device)
             target = target.to(device)
             output = model(data)
+            _, predicted = torch.max(output.data, 1)
+            total += target.size(0)
+            correct += (predicted == target).sum().item()
             val_loss += loss_fn(output, target).item()
     val_loss /= len(val_loader.dataset)
-    return val_loss
+    val_accuracy = correct / total
+    return val_loss, val_accuracy
 
 
 def total_gradient_l2_norm(model: nn.Module) -> float:
