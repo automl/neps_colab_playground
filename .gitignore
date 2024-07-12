@@ -4,6 +4,8 @@ __pycache__/
 *results*/
 *output*/
 
+.DS_Store
+
 *.pkl
 *.json
 *.pt
