@@ -1,5 +1,5 @@
 neural-pipeline-search==0.12.2
-ConfigSpace>0.6.0,<0.8.0
+ConfigSpace==0.4.12
 xgboost==1.5.2
 torchvision
 IPython

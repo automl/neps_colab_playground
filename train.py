@@ -54,23 +54,39 @@ def training_pipeline(
         * "loss" must be a minimizing metric
 
     Args:
-        out_dir (Union[Path, None]): Directory to save the checkpoint.
-        load_dir (Union[Path, None]): Directory to load the checkpoint.
-        batch_size (int): Batch size for training and validation dataloader.
-        num_layers (int): Number of convolutional layers in the model.
-        num_neurons (int): Number of neurons in the hidden layer.
-        learning_rate (float): Learning rate for the optimizer.
-        weight_decay (float): L2 regularization parameter.
-        optimizer (str): Name of the optimizer to use.
-        dropout (bool): Whether to use dropout in the model.
-        epochs (int): Number of epochs to train the model.
-        subsample (float): Fraction of the training data to use.
-        log_neps_tensorboard (bool): Whether to log tensorboard metrics.
-        verbose (bool): Whether to print training progress.
-        allow_checkpointing (bool): Whether to save checkpoints.
-        optimize_over_loss (bool): Whether to optimize over loss or accuracy.
+        out_dir: (Union[Path, None])
+            Directory to save the checkpoint.
+        load_dir: (Union[Path, None])
+            Directory to load the checkpoint.
+        batch_size: (int)
+            Batch size for training and validation dataloader.
+        num_layers: (int)
+            Number of convolutional layers in the model.
+        num_neurons: (int)
+            Number of neurons in the hidden layer.
+        learning_rate: (float)
+            Learning rate for the optimizer.
+        weight_decay: (float)
+            L2 regularization parameter.
+        optimizer: (str)
+            Name of the optimizer to use.
+        dropout: (bool)
+            Whether to use dropout in the model.
+        epochs: (int)
+            Number of epochs to train the model.
+        subsample: (float)
+             Fraction of the training data to use.
+        log_neps_tensorboard: (bool)
+            Whether to log tensorboard metrics.
+        verbose: (bool) 
+            Whether to print training progress.
+        allow_checkpointing: (bool) 
+            Whether to save checkpoints.
+        optimize_over_loss: (bool) 
+            Whether to optimize over loss or accuracy.
 
-        use_for_demo (bool): Whether to use this pipeline for demo purposes.
+        use_for_demo: (bool)
+            Whether to use this pipeline for demo purposes.
             This sets the subsampling factor to 10% and epochs to 3, or to the values 
             passed if it is less than 10% and 3 respectively.
     """
@@ -218,33 +234,23 @@ def training_pipeline(
     }
 
 
-def run_pipeline_demo(
-    # neps parameters for load-save of checkpoints
-    pipeline_directory,
-    previous_pipeline_directory,
-    # fixed settings
+run_pipeline_demo = partial(
+    training_pipeline,
+    # for a faster run
     batch_size=1024,
     subsample=0.2,
-    epochs=5,
+    epochs=3,
     use_for_demo=True,
-    # hyperparameters passed by NePS
-    **config,
-):
-    result = training_pipeline(
-        **config,
-        out_dir=pipeline_directory,
-        load_dir=previous_pipeline_directory,
-        batch_size=batch_size,
-        subsample=subsample,
-        epochs=epochs,
-        # other variables
-        log_neps_tensorboard=True,
-        verbose=False,
-        allow_checkpointing=True,
-        use_for_demo=use_for_demo,  # set to True for demo purposes
-    )
-    return result
+)
 
+run_pipeline_sf = partial(
+    training_pipeline,
+    allow_checkpointing = False,
+)
 
-run_pipeline_half_data = partial(run_pipeline_demo, use_for_demo=False, subsample=0.5)
-run_pipeline = partial(run_pipeline_demo, use_for_demo=False, subsample=1.0)
+run_pipeline_mf = partial(
+    training_pipeline,
+    allow_checkpointing = True,
+)
+
+run_pipeline_half_data = partial(training_pipeline, use_for_demo=False, subsample=0.5)
