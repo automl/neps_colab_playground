@@ -1,4 +1,4 @@
-neural-pipeline-search==0.12.2
+neural-pipeline-search==0.13.0
 ConfigSpace>0.6.0,<0.8.0
 xgboost==1.5.2
 torchvision
