@@ -192,18 +192,19 @@ def training_pipeline(
         start = time.time()
         if log_neps_tensorboard:
             # refer https://automl.github.io/neps/latest/examples/convenience/neps_tblogger_tutorial/
-            tblogger.log(
-                loss=val_loss,
-                current_epoch=epoch+1,
-                writer_config_scalar=True,
-                writer_config_hparam=True,
-                extra_data={
-                    "train_loss": tblogger.scalar_logging(value=mean_loss),
-                    "l2_norm": tblogger.scalar_logging(
-                        value=total_gradient_l2_norm(model)
-                    ),
-                },
-            )
+            # tblogger.log(
+            #     loss=val_loss,
+            #     current_epoch=epoch+1,
+            #     writer_config_scalar=True,
+            #     writer_config_hparam=True,
+            #     extra_data={
+            #         "train_loss": tblogger.scalar_logging(value=mean_loss),
+            #         "l2_norm": tblogger.scalar_logging(
+            #             value=total_gradient_l2_norm(model)
+            #         ),
+            #     },
+            # )
+            tblogger.ConfigWriter(write_summary_incumbent=True)
         logging_time = time.time() - start
     training_time = time.time() - train_start - validation_time - logging_time
 
@@ -212,7 +213,7 @@ def training_pipeline(
         save_neps_checkpoint(out_dir, epoch, model, optimizer, scheduler)
 
     return {
-        "loss": minimizing_metric,  # validation loss in the last epoch
+        "objective_to_minimize": minimizing_metric,  # validation loss in the last epoch
         "cost": time.time() - _start,
         "info_dict": {
             "training_loss": mean_loss,  # training loss in the last epoch
