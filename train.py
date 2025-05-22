@@ -160,6 +160,10 @@ def training_pipeline(
 
     train_start = time.time()
     validation_time = 0
+    if log_neps_tensorboard:
+        writer = tblogger.ConfigWriter(write_summary_incumbent=True)
+    else:
+        writer = None
     # Training loop
     steps = steps or 0  # accounting for continuation if checkpoint loaded
     for epoch in range(steps, epochs):
@@ -190,22 +194,19 @@ def training_pipeline(
 
         # special logging for NePS
         start = time.time()
-        if log_neps_tensorboard:
-            # refer https://automl.github.io/neps/latest/examples/convenience/neps_tblogger_tutorial/
-            # tblogger.log(
-            #     loss=val_loss,
-            #     current_epoch=epoch+1,
-            #     writer_config_scalar=True,
-            #     writer_config_hparam=True,
-            #     extra_data={
-            #         "train_loss": tblogger.scalar_logging(value=mean_loss),
-            #         "l2_norm": tblogger.scalar_logging(
-            #             value=total_gradient_l2_norm(model)
-            #         ),
-            #     },
-            # )
-            tblogger.ConfigWriter(write_summary_incumbent=True)
+        if writer is not None:
+            writer.add_scalar(tag="loss", scalar_value=minimizing_metric, global_step=epoch)
+            writer.add_scalar(tag="mean_loss", scalar_value=mean_loss, global_step=epoch)
+            writer.add_scalar(tag="lr_decay", scalar_value=scheduler.get_last_lr()[0], global_step=epoch)
         logging_time = time.time() - start
+        
+    if log_neps_tensorboard:  
+        writer.add_hparams(
+            hparam_dict={"lr": learning_rate, "optim": optimizer_name, "wd": weight_decay},
+            metric_dict={"loss_val": val_loss}
+        )
+        writer.close()
+
     training_time = time.time() - train_start - validation_time - logging_time
 
     # Save checkpoint
@@ -216,7 +217,7 @@ def training_pipeline(
         "objective_to_minimize": minimizing_metric,  # validation loss in the last epoch
         "cost": time.time() - _start,
         "info_dict": {
-            "training_loss": mean_loss,  # training loss in the last epoch
+            "training_loss": float(mean_loss),  # training loss in the last epoch
             "val_loss": val_loss,
             "val_accuracy": val_accuracy,
             "data_load_time": data_load_time,
