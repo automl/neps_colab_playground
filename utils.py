@@ -106,7 +106,7 @@ def load_neps_checkpoint(
     """
     steps = None
     if previous_pipeline_directory is not None:
-        checkpoint = torch.load(previous_pipeline_directory / "checkpoint.pth")
+        checkpoint = torch.load(previous_pipeline_directory / "checkpoint.pth", weights_only=False)
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         if scheduler is not None and "scheduler_state_dict" in checkpoint:
