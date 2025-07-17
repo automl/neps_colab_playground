@@ -220,18 +220,8 @@ def training_pipeline(
             "training_loss": float(mean_loss),  # training loss in the last epoch
             "val_loss": val_loss,
             "val_accuracy": val_accuracy,
-            "data_load_time": data_load_time,
             "training_time": training_time,
             "validation_time": validation_time,
-            "checkpoint_load_time": checkpoint_load_time,
-            "logging_time": logging_time,
-            "hyperparameters": {
-                "num_layers": num_layers,
-                "num_neurons": num_neurons,
-                "learning_rate": learning_rate,
-                "optimizer": optimizer_name,
-                "epochs": epochs,
-            },
         }
     }
 
