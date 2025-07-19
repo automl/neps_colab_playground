@@ -168,6 +168,13 @@ def get_args() -> argparse.Namespace:
             "If 'incumbent_trace', plots the incumbent trace over time. "
             "If 'pareto_front', plots the pareto front from the results."
     )
+    parser.add_argument(
+        "--objectives",
+        nargs="+",
+        type=str,
+        default=("objective_1", "objective_2"),
+        help="The list of objectives to plot."
+    )
     args = parser.parse_args()
     return args
 
@@ -183,8 +190,11 @@ if __name__ == "__main__":
     plt.figure(figsize=(8, 5))
     match args.do:
         case "pareto_front":
+            if isinstance(args.objectives, list):
+                args.objectives = tuple(args.objectives)
             plot_pareto_front(
                 args.root_directory,
+                args.objectives
             )
         case "incumbent_trace":
             assert args.algos is not None, "Please specify the algos to compare."
