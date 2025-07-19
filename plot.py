@@ -44,8 +44,8 @@ def plot_pareto_front(
     # Load data
     _df = pd.read_csv(path / "summary" / "full.csv")
     costs = np.vstack(_df["objective_to_minimize"].values)
-    assert costs.shape[1] == 2, \
-        "Can only plot pareto front for 2 objectives"
+    # assert costs.shape[1] == 2, \
+    #     "Can only plot pareto front for 2 objectives"
     is_pareto = pareto_front(costs)
     pareto_costs = costs[is_pareto]
     pareto_costs = pareto_costs[np.argsort(pareto_costs[:, 0])]
