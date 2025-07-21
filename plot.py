@@ -62,6 +62,7 @@ def plot_pareto_front(
         pareto_costs[:, 0], 
         pareto_costs[:, 1],
         where="post",
+        marker="s",
     )
     plt.xlabel(objectives[0])
     plt.ylabel(objectives[1])
